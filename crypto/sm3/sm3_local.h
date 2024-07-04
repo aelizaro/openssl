@@ -44,6 +44,9 @@ void ossl_hwsm3_block_data_order(SM3_CTX *c, const void *p, size_t num);
 #  define HWSM3_CAPABLE 1
 void ossl_hwsm3_block_data_order(SM3_CTX *c, const void *p, size_t num);
 # endif
+# if 1 // NEED a normal macro for x86_64
+#  define HWSM3_CAPABLE 1
+void ossl_hwsm3_block_data_order(SM3_CTX *c, const void *p, size_t num);
 #endif
 
 #if defined(HWSM3_CAPABLE)
