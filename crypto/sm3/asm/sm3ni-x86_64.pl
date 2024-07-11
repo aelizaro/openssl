@@ -93,12 +93,12 @@ $code.= ".text\n";
 # {
 $code.=<<___;
 .align 16
-SHUFF_MASK:
-    .byte 0x03, 0x02, 0x01, 0x00, 0x07, 0x06, 0x05, 0x04, 0x11, 0x10, 0x09, 0x08, 0x15, 0x14, 0x13, 0x12
-
+.SHUFF_MASK:
+    #.byte 0x03, 0x02, 0x01, 0x00, 0x07, 0x06, 0x05, 0x04, 0x11, 0x10, 0x09, 0x08, 0x15, 0x14, 0x13, 0x12
+    .byte 3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12
 .globl	ossl_hwsm3_block_data_order
 .type	ossl_hwsm3_block_data_order,\@function,3
-.align	16
+.align	32
 ossl_hwsm3_block_data_order:
     # note: wrong instruction!!! should be movsxd
     movsxl   %edx, %rdx
@@ -118,7 +118,7 @@ ossl_hwsm3_block_data_order:
     vpxor           %xmm5, %xmm4, %xmm0
     vpblendd        \$0x3, %xmm0, %xmm1, %xmm7
 
-    vmovdqa         SHUFF_MASK(%rip), %xmm12
+    vmovdqa         .SHUFF_MASK(%rip), %xmm12
 
 .align 32
 .block_loop:
