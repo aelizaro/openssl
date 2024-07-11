@@ -52,12 +52,12 @@ my $T3 = $W19_16;
 # Q: is it correct to write `3*4`?
 # Q: parameters order?
 $code.=<<___;
-    vpalignr        \$12, $T3, $W11_08, $W07_04
-    vpsrldq         \$4, $T1, $W15_12
-    vsm3msg1        $T3, $T1, $W03_00
-    vpalignr        \$12, $T1, $W07_04, $W03_00
-    vpalignr        \$8, $T2, $W15_12, $W11_08
-    vsm3msg2        $T3, $T1, $T2
+    vpalignr        \$12, $W07_04, $W11_08, $T3
+    vpsrldq         \$4, $W15_12, $T1
+    vsm3msg1        $W03_00, $T1, $T3
+    vpalignr        \$12, $W03_00, $W07_04, $T1
+    vpalignr        \$8, $W11_08, $W15_12, $T2
+    vsm3msg2        $T2, $T1, $T3
 ___
 }
 
@@ -68,10 +68,10 @@ sub sm3rounds4 {
 # Q: the last parameter of vsm3rnds2 syntax?
 my ($ABEF, $CDGH, $W03_00, $W07_04, $T1,$R)=@_;
 $code.=<<___;
-    vpunpcklqdq     $T1, $W03_00, $W07_04
-    vsm3rnds2       \$$R, $CDGH, $ABEF, $T1
-    vpunpckhqdq     $T1, $W03_00, $W07_04
-    vsm3rnds2       \$($R + 2), $ABEF, $CDGH, $T1
+    vpunpcklqdq     $W07_04, $W03_00, $T1
+    vsm3rnds2       \$$R, $T1, $ABEF, $CDGH
+    vpunpckhqdq     $W07_04, $W03_00, $T1
+    vsm3rnds2       \$($R + 2), $T1, $CDGH, $ABEF
 ___
 }
 
@@ -94,7 +94,7 @@ $code.= ".text\n";
 $code.=<<___;
 .align 16
 SHUFF_MASK:
-    .byte 0x3, 0x2, 0x1, 0x0, 0x7, 0x6, 0x5, 0x4, 0x11, 0x10, 0x9, 0x8, 0x15, 0x14, 0x13, 0x12
+    .byte 0x03, 0x02, 0x01, 0x00, 0x07, 0x06, 0x05, 0x04, 0x11, 0x10, 0x09, 0x08, 0x15, 0x14, 0x13, 0x12
 
 .globl	ossl_hwsm3_block_data_order
 .type	ossl_hwsm3_block_data_order,\@function,3
@@ -112,10 +112,10 @@ ossl_hwsm3_block_data_order:
     vpunpcklqdq     %xmm0, %xmm1, %xmm7
     vpsrld          \$9, %xmm7, %xmm2
     vpslld          \$23, %xmm7, %xmm3
-    vpxorq          %xmm3, %xmm2, %xmm1
+    vpxor           %xmm3, %xmm2, %xmm1
     vpsrld          \$19, %xmm7, %xmm4
     vpslld          \$13, %xmm7, %xmm5
-    vpxorq          %xmm0, %xmm4, %xmm5
+    vpxor           %xmm5, %xmm4, %xmm0
     vpblendd        \$0x3, %xmm0, %xmm1, %xmm7
 
     vmovdqa         SHUFF_MASK(%rip), %xmm12
@@ -267,11 +267,12 @@ $code.=<<___;
     vpshufd         \$0x1B, %xmm6, %xmm0,        # xmm0 = F E B A
     vpshufd         \$0x1B, %xmm7, %xmm1         # xmm1 = H G D C
 
-    vpunpcklqdq     %xmm0, %xmm1, %xmm6        # xmm6 = D C B A
-    vpunpckhqdq     %xmm0, %xmm1, %xmm7           # xmm7 = H G F E
+    vpunpcklqdq     %xmm1, %xmm0, %xmm6        # xmm6 = D C B A
+    vpunpckhqdq     %xmm1, %xmm0, %xmm7           # xmm7 = H G F E
 
-    vmovdqu         ($ctx), %xmm6
-    vmovdqu         16($ctx), %xmm7
+    # order?
+    vmovdqu         %xmm6, ($ctx)
+    vmovdqu         %xmm7, 16($ctx)
 
    ret
 ___
