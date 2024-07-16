@@ -1,12 +1,17 @@
 #! /usr/bin/env perl
 # Copyright 2024 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright (c) 2024, Intel Corporation. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 #
-# This module implements support for Intel SM3 instructions
+#
+# This module implements support for Intel(R) SM3 instructions
+# from Intel(R) Multi-Buffer Crypto for IPsec Library
+# (https://github.com/intel/intel-ipsec-mb).
+# Original author is Tomasz Kantecki <tomasz.kantecki@intel.com>
 
 # $output is the last argument if it looks like a file (it has an extension)
 # $flavour is the first argument if it doesn't look like a file
@@ -43,6 +48,10 @@ open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\""
 
 @_3args=$win64?	("%rcx","%rdx","%r8") :	# Win64 order
         ("%rdi","%rsi","%rdx");	# Unix order
+
+
+# +8-byte space for 16-byte alignment of XMM storage
+my $XMM_STORAGE = $win64 ? (10 * 16) : 0;        # ; space for saved XMM registers
 
 if ($avx2_sm3_ni>0) {
 # Create 4 x 32-bit new words of message schedule W[] using SM3-NI ISA
@@ -95,6 +104,41 @@ $code.=<<___;
 .type	ossl_hwsm3_block_data_order,\@function,3
 .align	32
 ossl_hwsm3_block_data_order:
+.cfi_startproc
+    endbranch
+# Prolog
+    push    %rbp
+.cfi_push   %rbp
+.Lossl_hwsm3_block_data_order_seh_push_rbp:
+    # ; %rbp contains stack pointer right after GP regs pushed at stack + [8
+    # ; bytes of alignment (Windows only)].  It serves as a frame pointer in SEH
+    # ; handlers. The requirement for a frame pointer is that its offset from
+    # ; RSP shall be multiple of 16, and not exceed 240 bytes. The frame pointer
+    # ; itself seems to be reasonable to use here, because later we do 64-byte stack
+    # ; alignment which gives us non-determinate offsets and complicates writing
+    # ; SEH handlers.
+    #
+    # ; It also serves as an anchor for retrieving stack arguments on both Linux
+    # ; and Windows.
+    lea     `$XMM_STORAGE`(%rsp),%rbp
+.cfi_def_cfa_register %rbp
+.Lossl_hwsm3_block_data_order_seh_setfp:
+___
+  if ($win64) {
+
+    # ; xmm6:xmm15 need to be preserved on Windows
+    foreach my $reg_idx (0 .. 12) {
+      my $xmm_reg_offset = ($reg_idx) * 16;
+      $code .= <<___;
+        vmovdqu           %xmm${reg_idx},$xmm_reg_offset(%rsp)
+.L${func_name}_seh_save_xmm${reg_idx}:
+___
+    }
+  }
+
+  $code .= <<___;
+# Prolog ends here.
+.Lossl_hwsm3_block_data_order_seh_prolog_end:
     or $num, $num
     je .done_hash
 
@@ -133,86 +177,58 @@ ossl_hwsm3_block_data_order:
 ___
     sm3msg("%xmm2", "%xmm3", "%xmm4", "%xmm5", "%xmm8", "%xmm9", "%xmm1");
     sm3rounds4("%xmm6", "%xmm7", "%xmm2", "%xmm3", "%xmm1", 0);
-$code.=<<___;
-    vmovdqa         %xmm8, %xmm2
-___
+
+    $code.="vmovdqa         %xmm8, %xmm2\n";
     sm3msg("%xmm3", "%xmm4", "%xmm5", "%xmm2", "%xmm8", "%xmm9", "%xmm1");
     sm3rounds4("%xmm6", "%xmm7", "%xmm3", "%xmm4", "%xmm1", 4);
 
-$code.=<<___;
-    vmovdqa         %xmm8, %xmm3
-___
+    $code.="vmovdqa         %xmm8, %xmm3\n";
     sm3msg("%xmm4", "%xmm5", "%xmm2", "%xmm3", "%xmm8", "%xmm9", "%xmm1");
     sm3rounds4("%xmm6", "%xmm7", "%xmm4", "%xmm5", "%xmm1", 8);
 
-$code.=<<___;
-    vmovdqa         %xmm8, %xmm4
-___
+    $code.="vmovdqa         %xmm8, %xmm4\n";
     sm3msg("%xmm5", "%xmm2", "%xmm3", "%xmm4", "%xmm8", "%xmm9", "%xmm1");
     sm3rounds4("%xmm6", "%xmm7", "%xmm5", "%xmm2", "%xmm1", 12);
 
-$code.=<<___;
-    vmovdqa         %xmm8, %xmm5
-___
+    $code.="vmovdqa         %xmm8, %xmm5\n";
     sm3msg("%xmm2", "%xmm3", "%xmm4", "%xmm5", "%xmm8", "%xmm9", "%xmm1");
     sm3rounds4("%xmm6", "%xmm7", "%xmm2", "%xmm3", "%xmm1", 16);
 
-$code.=<<___;
-    vmovdqa         %xmm8, %xmm2
-___
+    $code.="vmovdqa         %xmm8, %xmm2\n";
     sm3msg("%xmm3", "%xmm4", "%xmm5", "%xmm2", "%xmm8", "%xmm9", "%xmm1");
     sm3rounds4("%xmm6", "%xmm7", "%xmm3", "%xmm4", "%xmm1", 20);
 
-$code.=<<___;
-    vmovdqa         %xmm8, %xmm3
-___
+    $code.="vmovdqa         %xmm8, %xmm3\n";
     sm3msg("%xmm4", "%xmm5", "%xmm2", "%xmm3", "%xmm8", "%xmm9", "%xmm1");
     sm3rounds4("%xmm6", "%xmm7", "%xmm4", "%xmm5", "%xmm1", 24);
 
-$code.=<<___;
-    vmovdqa         %xmm8, %xmm4
-___
+    $code.="vmovdqa         %xmm8, %xmm4\n";
     sm3msg("%xmm5", "%xmm2", "%xmm3", "%xmm4", "%xmm8", "%xmm9", "%xmm1");
     sm3rounds4("%xmm6", "%xmm7", "%xmm5", "%xmm2", "%xmm1", 28);
 
-$code.=<<___;
-    vmovdqa         %xmm8, %xmm5
-___
+    $code.="vmovdqa         %xmm8, %xmm5\n";
     sm3msg("%xmm2", "%xmm3", "%xmm4", "%xmm5", "%xmm8", "%xmm9", "%xmm1");
     sm3rounds4("%xmm6", "%xmm7", "%xmm2", "%xmm3", "%xmm1", 32);
 
-$code.=<<___;
-    vmovdqa         %xmm8, %xmm2
-___
+    $code.="vmovdqa         %xmm8, %xmm2\n";
     sm3msg("%xmm3", "%xmm4", "%xmm5", "%xmm2", "%xmm8", "%xmm9", "%xmm1");
     sm3rounds4("%xmm6", "%xmm7", "%xmm3", "%xmm4", "%xmm1", 36);
 
-$code.=<<___;
-    vmovdqa         %xmm8, %xmm3
-___
+    $code.="vmovdqa         %xmm8, %xmm3\n";
     sm3msg("%xmm4", "%xmm5", "%xmm2", "%xmm3", "%xmm8", "%xmm9", "%xmm1");
     sm3rounds4("%xmm6", "%xmm7", "%xmm4", "%xmm5", "%xmm1", 40);
 
-$code.=<<___;
-    vmovdqa         %xmm8, %xmm4
-___
+    $code.="vmovdqa         %xmm8, %xmm4\n";
     sm3msg("%xmm5", "%xmm2", "%xmm3", "%xmm4", "%xmm8", "%xmm9", "%xmm1");
     sm3rounds4("%xmm6", "%xmm7", "%xmm5", "%xmm2", "%xmm1", 44);
 
-$code.=<<___;
-    vmovdqa         %xmm8, %xmm5
-___
+    $code.="vmovdqa         %xmm8, %xmm5\n";
     sm3msg("%xmm2", "%xmm3", "%xmm4", "%xmm5", "%xmm8", "%xmm9", "%xmm1");
     sm3rounds4("%xmm6", "%xmm7", "%xmm2", "%xmm3", "%xmm1", 48);
 
-$code.=<<___;
-    vmovdqa         %xmm8, %xmm2
-___
-
+    $code.="vmovdqa         %xmm8, %xmm2\n";
     sm3rounds4("%xmm6", "%xmm7", "%xmm3", "%xmm4", "%xmm1", 52);
-
     sm3rounds4("%xmm6", "%xmm7", "%xmm4", "%xmm5", "%xmm1", 56);
-
     sm3rounds4("%xmm6", "%xmm7", "%xmm5", "%xmm2", "%xmm1", 60);
 
 $code.=<<___;
@@ -240,7 +256,31 @@ $code.=<<___;
     vmovdqu         %xmm6, ($ctx)
     vmovdqu         %xmm7, 16($ctx)
 .done_hash:
-   ret
+    # Epilog
+    vzeroupper
+___
+  if ($win64) {
+    # ; restore xmm12:xmm0
+    for (my $reg_idx = 12; $reg_idx >= 0; $reg_idx--) {
+      my $xmm_reg_offset = -$XMM_STORAGE + ($reg_idx) * 16;
+      $code .= <<___;
+        vmovdqu           $xmm_reg_offset(%rbp),%xmm${reg_idx},
+___
+    }
+  }
+  if ($win64) {
+    # Forming valid epilog for SEH with use of frame pointer.
+    # https://docs.microsoft.com/en-us/cpp/build/prolog-and-epilog?view=msvc-160#epilog-code
+    $code .= "lea      8(%rbp),%rsp\n";
+  } else {
+    $code .= "lea      (%rbp),%rsp\n";
+    $code .= ".cfi_def_cfa_register %rsp\n";
+  }
+  $code .= <<___;
+     pop     %rbp
+.cfi_pop     %rbp
+    ret
+.cfi_endproc
 ___
 }
 } else { # fallback
