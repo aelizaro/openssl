@@ -193,3 +193,20 @@ void ossl_sm3_block_data_order(SM3_CTX *ctx, const void *p, size_t num)
         ctx->H ^= H;
     }
 }
+
+/* Returns non-zero when SM3 Instructions are available */
+int ossl_sm3_ni_x86_capable(void);
+
+typedef void (*ossl_sm3_block_order_ptr) (SM3_CTX *c, const void *p, size_t num);
+
+void ossl_hwsm3_block_data_order(SM3_CTX *c, const void *p, size_t num) {
+    static ossl_sm3_block_order_ptr func = NULL;
+    if(func == NULL) {
+        if(ossl_sm3_ni_x86_capable()) {
+            func = ossl_hwsm3_ni_x86_block_data_order;
+        } else {
+            func = ossl_sm3_block_data_order;
+        }
+    }
+    func(c, p, num);
+}
