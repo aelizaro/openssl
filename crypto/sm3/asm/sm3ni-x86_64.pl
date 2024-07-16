@@ -93,23 +93,39 @@ $code.=<<___;
 
 .text
 
-# void ossl_hwsm3_block_data_order(SM3_CTX *c, const void *p, size_t num)
+.extern OPENSSL_ia32cap_P
+.globl  ossl_sm3_ni_x86_capable
+.type   ossl_sm3_ni_x86_capable,\@abi-omnipotent
+.align 32
+ossl_sm3_ni_x86_capable:
+    mov	OPENSSL_ia32cap_P+0(%rip),%r10d
+    mov OPENSSL_ia32cap_P+4(%rip), %r11
+    # need a different check!!!
+	and	\$`1<<28`,%r11d		# mask AVX bit
+	and	\$`1<<30`,%r10d		# mask "Intel CPU" bit
+	or	%r11d,%r10d
+	cmp	\$`1<<28|1<<30`,%r10d
+    cmove %r10,%rax
+    ret
+.size   ossl_sm3_ni_x86_capable, .-ossl_sm3_ni_x86_capable
+
+# void ossl_hwsm3_ni_x86_block_data_order(SM3_CTX *c, const void *p, size_t num)
 #
 # input: $ctx SM3 context
 #        $p  pointer to the data
 #        $num number of blocks
 #
 
-.globl	ossl_hwsm3_block_data_order
-.type	ossl_hwsm3_block_data_order,\@function,3
+.globl	ossl_hwsm3_ni_x86_block_data_order
+.type	ossl_hwsm3_ni_x86_block_data_order,\@function,3
 .align	32
-ossl_hwsm3_block_data_order:
+ossl_hwsm3_ni_x86_block_data_order:
 .cfi_startproc
     endbranch
 # Prolog
     push    %rbp
 .cfi_push   %rbp
-.Lossl_hwsm3_block_data_order_seh_push_rbp:
+.Lossl_hwsm3_ni_x86_block_data_order_seh_push_rbp:
     # ; %rbp contains stack pointer right after GP regs pushed at stack + [8
     # ; bytes of alignment (Windows only)].  It serves as a frame pointer in SEH
     # ; handlers. The requirement for a frame pointer is that its offset from
@@ -122,7 +138,7 @@ ossl_hwsm3_block_data_order:
     # ; and Windows.
     lea     `$XMM_STORAGE`(%rsp),%rbp
 .cfi_def_cfa_register %rbp
-.Lossl_hwsm3_block_data_order_seh_setfp:
+.Lossl_hwsm3_ni_x86_block_data_order_seh_setfp:
 ___
   if ($win64) {
 
@@ -138,7 +154,7 @@ ___
 
   $code .= <<___;
 # Prolog ends here.
-.Lossl_hwsm3_block_data_order_seh_prolog_end:
+.Lossl_hwsm3_ni_x86_block_data_order_seh_prolog_end:
     or $num, $num
     je .done_hash
 
@@ -286,11 +302,19 @@ ___
 } else { # fallback
 $code .= <<___;
 .text
-.type ossl_hwsm3_block_data_order,\@abi-omnipotent
-ossl_hwsm3_block_data_order:
+
+.globl  ossl_sm3_ni_x86_capable
+.type   ossl_sm3_ni_x86_capable,\@abi-omnipotent
+ossl_sm3_ni_x86_capable:
+    xor     %eax,%eax
+    ret
+.size   ossl_sm3_ni_x86_capable, .-ossl_sm3_ni_x86_capable
+
+.type ossl_hwsm3_ni_x86_block_data_order,\@abi-omnipotent
+ossl_hwsm3_ni_x86_block_data_order:
     .byte   0x0f,0x0b    # ud2
     ret
-.size   ossl_hwsm3_block_data_order, .-ossl_hwsm3_block_data_order
+.size   ossl_hwsm3_ni_x86_block_data_order, .-ossl_hwsm3_ni_x86_block_data_order
 ___
 } # avx2_sm3_ni
 
