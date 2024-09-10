@@ -309,6 +309,7 @@ ossl_sm3_ni_x86_capable:
     ret
 .size   ossl_sm3_ni_x86_capable, .-ossl_sm3_ni_x86_capable
 
+.globl	ossl_hwsm3_ni_x86_block_data_order
 .type ossl_hwsm3_ni_x86_block_data_order,\@abi-omnipotent
 ossl_hwsm3_ni_x86_block_data_order:
     .byte   0x0f,0x0b    # ud2
