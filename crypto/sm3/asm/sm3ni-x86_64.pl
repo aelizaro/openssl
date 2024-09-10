@@ -98,13 +98,12 @@ $code.=<<___;
 .type   ossl_sm3_ni_x86_capable,\@abi-omnipotent
 .align 32
 ossl_sm3_ni_x86_capable:
-    mov	OPENSSL_ia32cap_P+0(%rip),%r10d
-    mov OPENSSL_ia32cap_P+4(%rip), %r11
-    # need a different check!!!
-	and	\$`1<<28`,%r11d		# mask AVX bit
-	and	\$`1<<30`,%r10d		# mask "Intel CPU" bit
+    mov	OPENSSL_ia32cap_P+8(%rip),%r10d
+    mov OPENSSL_ia32cap_P+20(%rip), %r11 # cpuid(EAX=0x7, ECX=0x1).EAX
+	and	\$`1<<1`,%r11d		# mask SM3-NI bit (bit 1)
+	and	\$`1<<5`,%r10d		# mask AVX2 bit
 	or	%r11d,%r10d
-	cmp	\$`1<<28|1<<30`,%r10d
+	cmp	\$`1<<1|1<<5`,%r10d
     cmove %r10,%rax
     ret
 .size   ossl_sm3_ni_x86_capable, .-ossl_sm3_ni_x86_capable
