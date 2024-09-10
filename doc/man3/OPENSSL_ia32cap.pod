@@ -83,8 +83,9 @@ actually shared between logical cores. This in turn affects the decision
 on whether or not expensive countermeasures against cache-timing attacks
 are applied, most notably in AES assembler module.
 
-The capability vector is further extended with EBX value returned by
-CPUID with EAX=7 and ECX=0 as input. Following bits are significant:
+The capability vector is further extended with EBX, ECX, and EDX values 
+returned by CPUID with EAX=7 and ECX=0 as input. Following bits are 
+significant:
 
 =over 4
 
@@ -116,6 +117,28 @@ aka AVX512IFMA extension;
 
 =item bit #64+42 denoting availability of VPCLMULQDQ extension;
 
+=item bit #128+15 denoting availability of Hybrid CPU;
+
+=item bit #128+29 denoting support for IA32_ARCH_CAPABILITIES MSR;
+
+=back
+
+The capability vector is further extended with EAX, EDX, and EBX values 
+returned by CPUID with EAX=7 and ECX=1 as input. Following bits 
+are significant:
+
+=item bit #128+0 denoting availability of SHA512 extension;
+
+=item bit #128+1 denoting availability of SM3 extension;
+
+=item bit #128+2 denoting availability of SM4 extension;
+
+=item bit #128+23 denoting availability of AVX-IFMA extension;
+
+=item bit #128+51 denoting availability of AVX10 extension;
+
+=item bit #128+53 denoting availability of APX_F extension;
+
 =back
 
 To control this extended capability word use C<:> as delimiter when
@@ -129,7 +152,7 @@ Not available.
 
 =head1 COPYRIGHT
 
-Copyright 2004-2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2004-2024 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
