@@ -34,8 +34,8 @@ if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
 }
 
 if (!$avx2_sm3_ni && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
-	   `nasm -v 2>&1` =~ /NASM version ([2-9]\.[0-9]+)/) {
-	$avx2_sm3_ni = ($1>=2.16); # support added at NASM 2.16.02
+	   `nasm -v 2>&1` =~ /NASM version ([2-9]\.[0-9]+\.[0-9]+)/) {
+	$avx2_sm3_ni = ($1>=2.16.02); # support added at NASM 2.16.02
 }
 
 if (!$avx2_sm3_ni && `$ENV{CC} -v 2>&1` =~ /((?:clang|LLVM) version|.*based on LLVM) ([0-9]+\.[0-9]+)/) {
