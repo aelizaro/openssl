@@ -127,17 +127,19 @@ The capability vector is further extended with EAX, EDX, and EBX values
 returned by CPUID with EAX=7 and ECX=1 as input. Following bits 
 are significant:
 
-=item bit #128+0 denoting availability of SHA512 extension;
+=over 4
 
-=item bit #128+1 denoting availability of SM3 extension;
+=item bit #160+0 denoting availability of SHA512 extension;
 
-=item bit #128+2 denoting availability of SM4 extension;
+=item bit #160+1 denoting availability of SM3 extension;
 
-=item bit #128+23 denoting availability of AVX-IFMA extension;
+=item bit #160+2 denoting availability of SM4 extension;
 
-=item bit #128+51 denoting availability of AVX10 extension;
+=item bit #160+23 denoting availability of AVX-IFMA extension;
 
-=item bit #128+53 denoting availability of APX_F extension;
+=item bit #160+51 denoting availability of AVX10 extension;
+
+=item bit #160+53 denoting availability of APX_F extension;
 
 =back
 
