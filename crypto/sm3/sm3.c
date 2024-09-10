@@ -204,8 +204,10 @@ void ossl_hwsm3_block_data_order(SM3_CTX *c, const void *p, size_t num) {
     static ossl_sm3_block_order_ptr func = NULL;
     if(func == NULL) {
         if(ossl_sm3_ni_x86_capable()) {
+            printf("Using SM3 NI\n");
             func = ossl_hwsm3_ni_x86_block_data_order;
         } else {
+            printf("Using SM3 Generic\n");
             func = ossl_sm3_block_data_order;
         }
     }
