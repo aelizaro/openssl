@@ -89,7 +89,7 @@ my ($ctx,$p,$num) = @_3args;
 
 $code.=<<___;
 .align 16
-.SHUFF_MASK:
+SHUFF_MASK:
     .byte 3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12
 
 .text
@@ -173,7 +173,7 @@ ___
     vpxor           %xmm5, %xmm4, %xmm0
     vpblendd        \$0x3, %xmm0, %xmm1, %xmm7
 
-    vmovdqa         .SHUFF_MASK(%rip), %xmm12
+    vmovdqa         SHUFF_MASK(%rip), %xmm12
 
 .align 32
 .block_loop:
