@@ -195,7 +195,7 @@ void ossl_sm3_block_data_order(SM3_CTX *ctx, const void *p, size_t num)
 }
 
 #if defined(OPENSSL_SM3_ASM)
-#if (defined(__x86_64) || defined(__x86_64__))
+#if (defined(__x86_64) || defined(__x86_64__) || defined(_M_X64))
 /* Returns non-zero when SM3 Instructions are available */
 int ossl_sm3_ni_x86_capable(void);
 
