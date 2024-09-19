@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_x509");
 
-plan tests => 97;
+plan tests => 105;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -303,6 +303,34 @@ my $iobo_cert = srctop_file(@certs, "ext-issuedOnBehalfOf.pem");
 cert_contains($iobo_cert,
               "DirName:CN = Wildboar",
               1, 'X.509 Issued On Behalf Of');
+
+my $auth_att_id_cert = srctop_file(@certs, "ext-authorityAttributeIdentifier.pem");
+cert_contains($auth_att_id_cert,
+              "DirName:CN = Wildboar",
+              1, 'X.509 Authority Attribute Identifier');
+cert_contains($auth_att_id_cert,
+              "Issuer Serial: 01030507",
+              1, 'X.509 Authority Attribute Identifier');
+cert_contains($auth_att_id_cert,
+              "Issuer UID: B2",
+              1, 'X.509 Authority Attribute Identifier');
+
+my $role_spec_cert = srctop_file(@certs, "ext-roleSpecCertIdentifier.pem");
+cert_contains($role_spec_cert,
+              "Role Name: DirName:CN = Wildboar",
+              1, 'X.509 Role Spec Certificate Identifier');
+cert_contains($role_spec_cert,
+              "Role Certificate Issuer: DirName:CN",
+              1, 'X.509 Role Spec Certificate Identifier');
+cert_contains($role_spec_cert,
+              "Role Certificate Serial Number: 33818120 \\(0x2040608\\)",
+              1, 'X.509 Role Spec Certificate Identifier');
+cert_contains($role_spec_cert,
+              "DNS:wildboarsoftware.com",
+              1, 'X.509 Role Spec Certificate Identifier');
+cert_contains($role_spec_cert,
+              "Registered ID:description",
+              1, 'X.509 Role Spec Certificate Identifier');
 
 sub test_errors { # actually tests diagnostics of OSSL_STORE
     my ($expected, $cert, @opts) = @_;
