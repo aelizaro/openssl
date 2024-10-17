@@ -33,7 +33,7 @@ print<<___;
 	call	OPENSSL_cpuid_setup
 
 .hidden	OPENSSL_ia32cap_P
-.comm	OPENSSL_ia32cap_P,40,4
+.comm	OPENSSL_ia32cap_P,40
 .text
 
 .globl	OPENSSL_atomic_add
