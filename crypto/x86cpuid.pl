@@ -137,18 +137,18 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&mov	("eax",7);
 	&xor	("ecx","ecx");
 	&cpuid	();
-	# &mov	(&DWP(8,"edi"),"ebx");	# save cpuid(EAX=0x7, ECX=0x0).EBX to OPENSSL_ia32cap_P[2]
-	# &mov	(&DWP(12,"edi"),"ecx");	# save cpuid(EAX=0x7, ECX=0x0).ECX to OPENSSL_ia32cap_P[3]
-	# &mov	(&DWP(16,"edi"),"edx");	# save cpuid(EAX=0x7, ECX=0x0).EDX to OPENSSL_ia32cap_P[4]
-	# &cmp	("eax",1);				# Do we have cpuid(EAX=0x7, ECX=0x1)?
-	# &jb	(&label("no_extended_info"));
-	# &mov	("eax",7);
-	# &mov	("ecx",1);
-	# &cpuid	();						# cpuid(EAX=0x7, ECX=0x1)
-	# &mov	(&DWP(20,"edi"),"eax");	# save cpuid(EAX=0x7, ECX=0x1).EAX to OPENSSL_ia32cap_P[5]
-	# &mov	(&DWP(24,"edi"),"edx");	# save cpuid(EAX=0x7, ECX=0x1).EDX to OPENSSL_ia32cap_P[6]
-	# &mov	(&DWP(28,"edi"),"ebx");	# save cpuid(EAX=0x7, ECX=0x1).EBX to OPENSSL_ia32cap_P[7]
-	# &mov	(&DWP(32,"edi"),"ecx");	# save cpuid(EAX=0x7, ECX=0x1).EBX to OPENSSL_ia32cap_P[8]
+	&mov	(&DWP(8,"edi"),"ebx");	# save cpuid(EAX=0x7, ECX=0x0).EBX to OPENSSL_ia32cap_P[2]
+	&mov	(&DWP(12,"edi"),"ecx");	# save cpuid(EAX=0x7, ECX=0x0).ECX to OPENSSL_ia32cap_P[3]
+	&mov	(&DWP(16,"edi"),"edx");	# save cpuid(EAX=0x7, ECX=0x0).EDX to OPENSSL_ia32cap_P[4]
+	&cmp	("eax",1);				# Do we have cpuid(EAX=0x7, ECX=0x1)?
+	&jb	(&label("no_extended_info"));
+	&mov	("eax",7);
+	&mov	("ecx",1);
+	&cpuid	();						# cpuid(EAX=0x7, ECX=0x1)
+	&mov	(&DWP(20,"edi"),"eax");	# save cpuid(EAX=0x7, ECX=0x1).EAX to OPENSSL_ia32cap_P[5]
+	&mov	(&DWP(24,"edi"),"edx");	# save cpuid(EAX=0x7, ECX=0x1).EDX to OPENSSL_ia32cap_P[6]
+	&mov	(&DWP(28,"edi"),"ebx");	# save cpuid(EAX=0x7, ECX=0x1).EBX to OPENSSL_ia32cap_P[7]
+	&mov	(&DWP(32,"edi"),"ecx");	# save cpuid(EAX=0x7, ECX=0x1).EBX to OPENSSL_ia32cap_P[8]
 
 	# &and	("edx",0x80000);		# Mask cpuid(EAX=0x7, ECX=0x1).EDX bit 19 to detect AVX10 support
 	# &cmp	("edx",0x0);
