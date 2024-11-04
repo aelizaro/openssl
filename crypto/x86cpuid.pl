@@ -139,11 +139,11 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&cpuid	();
 	&mov	(&DWP(8,"edi"),"ebx");	# save cpuid(EAX=0x7, ECX=0x0).EBX to OPENSSL_ia32cap_P[2]
 	&mov	(&DWP(12,"edi"),"ecx");	# save cpuid(EAX=0x7, ECX=0x0).ECX to OPENSSL_ia32cap_P[3]
-	&mov	(&DWP(16,"edi"),"edx");	# save cpuid(EAX=0x7, ECX=0x0).EDX to OPENSSL_ia32cap_P[4]
-	&cmp	("eax",1);				# Do we have cpuid(EAX=0x7, ECX=0x1)?
-	&jb	(&label("no_extended_info"));
-	&mov	("eax",7);
-	&mov	("ecx",1);
+	# &mov	(&DWP(16,"edi"),"edx");	# save cpuid(EAX=0x7, ECX=0x0).EDX to OPENSSL_ia32cap_P[4]
+	# &cmp	("eax",1);				# Do we have cpuid(EAX=0x7, ECX=0x1)?
+	# &jb	(&label("no_extended_info"));
+	# &mov	("eax",7);
+	# &mov	("ecx",1);
 	# &cpuid	();						# cpuid(EAX=0x7, ECX=0x1)
 	# &mov	(&DWP(20,"edi"),"eax");	# save cpuid(EAX=0x7, ECX=0x1).EAX to OPENSSL_ia32cap_P[5]
 	# &mov	(&DWP(24,"edi"),"edx");	# save cpuid(EAX=0x7, ECX=0x1).EDX to OPENSSL_ia32cap_P[6]
