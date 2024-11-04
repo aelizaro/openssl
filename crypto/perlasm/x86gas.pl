@@ -167,7 +167,7 @@ sub ::file_end
 	}
     }
     if (grep {/\b${nmdecor}OPENSSL_ia32cap_P\b/i} @out) {
-	my $tmp=".comm\t${nmdecor}OPENSSL_ia32cap_P,16";
+	my $tmp=".comm\t${nmdecor}OPENSSL_ia32cap_P,40";
 	if ($::macosx)	{ push (@out,"$tmp,2\n"); }
 	elsif ($::elf)	{ push (@out,"$tmp,4\n"); }
 	else		{ push (@out,"$tmp\n"); }
